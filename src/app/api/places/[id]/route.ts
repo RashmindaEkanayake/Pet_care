@@ -4,9 +4,9 @@ import { db } from "@/lib/db";
 
 export async function GET(
     req: NextRequest,
-    { params }: { params: { id: string } }
+    context: { params: Promise<{ id: string }> }
 ) {
-    const { id } = await params;
+    const { id } = await context.params;
     const placeId = parseInt(id, 10);
 
     if (isNaN(placeId)) {
