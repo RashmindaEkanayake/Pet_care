@@ -62,9 +62,12 @@ npx prisma migrate dev
 ```
 
 ### 2️⃣ Production Environment Variables
-Set these in Vercel or your `.env`:
-- `DATABASE_URL`: Your PostgreSQL connection string.
+Set these in Vercel (Settings > Environment Variables) or your `.env`:
+- `DATABASE_URL`: Your PostgreSQL connection string (Required for build).
 - `ADMIN_SECRET`: A secure key for triggering data imports.
+
+> [!IMPORTANT]
+> If you see `P1012: Environment variable not found: DATABASE_URL` during Vercel build, ensure the variable is added in your Vercel Project Settings and that you've triggered a new redeploy.
 
 ### 3️⃣ Ingest Free Data (OSM)
 Once deployed, trigger the OSM ingestion pipeline:
