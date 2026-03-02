@@ -50,40 +50,18 @@ export async function GET(req: NextRequest) {
 
         const places = await db.place.findMany({
             where,
-            orderBy: [
-                { rating: "desc" },
-                { reviewCount: "desc" }
-            ]
         });
 
-        // Sort by opening status priority as requested previously
         const sorted = places.sort((a, b) => {
-            const getPriority = (p: any) => {
-                const status = (p.openingStatus || "").toLowerCase();
-                if (status.includes("24 hours")) return 0;
-                if (status.includes("open")) return 1;
-                if (status.includes("closed")) return 3;
-                return 2;
-            };
-
-            const priA = getPriority(a);
-            const priB = getPriority(b);
+            const is24h = (p: any) => (p.openingStatus || "").toLowerCase().includes("24 hours");
+            const priA = is24h(a) ? 0 : 1;
+            const priB = is24h(b) ? 0 : 1;
 
             if (priA !== priB) return priA - priB;
-            return (b.rating || 0) - (a.rating || 0);
+            return a.name.localeCompare(b.name);
         });
 
-        const response: any = {
-            data: sorted
-        };
-
-        if (isDev) {
-            response.requestedDistrict = districtRaw;
-            response.normalizedDistrict = normalizedDistrict;
-            response.returnedCount = sorted.length;
-        }
-
-        return NextResponse.json(response);
+        return NextResponse.json(sorted);
     } catch (error: any) {
         return NextResponse.json({ error: error.message }, { status: 500 });
     }

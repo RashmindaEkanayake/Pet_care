@@ -124,6 +124,21 @@ export default function ClinicDetailsPage({ params: paramsPromise }: { params: P
                     </div>
                 </div>
 
+                {place.reviewSnippet && (
+                    <div className="bg-amber-50 dark:bg-amber-900/20 rounded-2xl p-5 shadow-sm border border-amber-100 dark:border-amber-800/30">
+                        <h2 className="text-lg font-bold text-amber-900 dark:text-amber-100 mb-3 flex items-center gap-2">
+                            <span className="material-symbols-outlined text-amber-600">verified</span>
+                            Why Choose This Place
+                        </h2>
+                        <div className="relative">
+                            <span className="material-symbols-outlined absolute -top-1 -left-1 text-amber-200 dark:text-amber-800/50 text-4xl -z-10 rotate-180">format_quote</span>
+                            <p className="text-amber-800 dark:text-amber-200 text-sm italic leading-relaxed pl-4 font-medium">
+                                "{place.reviewSnippet}"
+                            </p>
+                        </div>
+                    </div>
+                )}
+
                 <div className="bg-white dark:bg-[#3d251e] rounded-2xl p-5 shadow-sm border border-[#f0e6dc] dark:border-white/5">
                     <h2 className="text-lg font-bold text-text-main-details dark:text-[#f3e5d8] mb-4 flex items-center gap-2">
                         <span className="material-symbols-outlined text-primary-details">location_on</span>

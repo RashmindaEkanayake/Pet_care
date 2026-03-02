@@ -6,32 +6,33 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
 model Place {
   id              Int      @id @default(autoincrement())
+  osmId           String?  @unique
   name            String
-  category        String   // clinic, veterinarian, pet_shop
+  category        String   // "clinic" or "pet_shop"
+  latitude        Float?
+  longitude       Float?
   address         String?
   phone           String?
-  latitude        Float?   // optional for now
-  longitude       Float?   // optional for now
-  rating          Float?
-  reviewCount     Int?
+  district        String?
+  source          String?
   mapsUrl         String?
   imageUrl        String?
   openingStatus   String?   // e.g. Open, Closed, Open 24 hours
   closingInfo     String?     // e.g. Closes 8 PM, Opens 8 AM Mon
   reviewSnippet   String?
-  district        String?     // Sri Lanka district
-  source          String?          // e.g. csv_google_maps
+  rating          Float?
+  reviewCount     Int?
   lastUpdatedAt   DateTime?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
+  @@index([district])
+  @@index([latitude, longitude])
   @@index([category])
-  @@index([latitude])
-  @@index([longitude])
 }

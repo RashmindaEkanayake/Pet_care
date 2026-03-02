@@ -23,7 +23,7 @@ export default function EmergencyPage() {
                     url = `/api/places/emergency?lat=${lat}&lng=${lng}&radius_km=20`;
                 } else if (mode === "district") {
                     const district = localStorage.getItem("selectedDistrict");
-                    url = `/api/emergency/by-district?district=${district}`;
+                    url = `/api/places/emergency?district=${district}`;
                 }
 
                 if (url) {

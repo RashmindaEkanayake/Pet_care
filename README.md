@@ -22,82 +22,68 @@ PetRescue aims to become a reliable digital assistant for pet owners by:
 - Community reporting for incorrect information
 - Expansion to multiple regions
 
-## 🚀 Current Features (MVP)
-- 📍 **Location-based nearby search** (Geolocation support)
-- 🚨 **Emergency mode** (Prioritized by proximity and availability)
-- 🏥 **Browse clinics, veterinarians, and pet shops**
+## 🚀 Current Features (Production Ready)
+- 📍 **Smart Location System**:
+  - GPS Mode: Real-time distance-based sorting (Haversine).
+  - District Mode: Manual selection of 25 Sri Lanka districts for users who deny GPS.
+- 🚨 **Emergency mode**: Prioritizes 24/7 clinics and proximity.
+- 🏥 **Data Ingestion**: Integrated OpenStreetMap (OSM) pipeline for free, automated data updates.
 - 📞 **One-click call functionality**
-- 🗺 **Directions integration** (Google Maps)
-- 🗂 **CSV-based data import system**
-- 🛠 **Admin import dashboard**
+- 🗺 **Directions integration** (Google/Apple Maps)
+- 🛠 **DB Health Diagnostics**: Real-time monitoring of database health and district coverage.
 
 ## 🧱 Tech Stack
 - **Frontend**: Next.js (App Router), React
 - **Styling**: Vanilla CSS + Tailwind CSS
-- **Backend**: Next.js API Routes
-- **Database**: Prisma + SQLite
-- **Data Source**: Google Maps data (CSV import)
-- **Utilities**: Haversine Formula for distance calculation
+- **Backend**: Next.js API Routes (Node.js runtime)
+- **Database**: Prisma + PostgreSQL (Vercel/Production) / SQLite (Local)
+- **Data Source**: OpenStreetMap (OSM) via Overpass API
 
 ## 📁 Project Structure
 ```text
 pet-care-app/
-├── prisma/                  # Database schema and SQLite DB
-├── src/app/                 # App routes (UI screens)
-│   └── api/                 # API logic (Nearby, Emergency, Details)
-├── src/lib/                 # Core logic (DB client, Import Service)
-├── scripts/                 # CSV import automation script
-├── data/                    # CSV data source (petshop_detailes.csv)
+├── prisma/                  # Schema and migrations
+├── src/app/                 # UI Screens & API Routes
+│   ├── api/admin/import-osm # Free data ingestion pipeline
+│   ├── api/places/nearby   # GPS-based search
+│   ├── api/places/by-district # District-based search
+│   └── api/debug/db-health  # Production monitoring
+├── src/lib/                 # Geo utilities and DB Client
 └── README.md
 ```
 
 ## ⚙️ Setup & Installation
 
-### 1️⃣ Clone the repository
-```bash
-git clone https://github.com/yourusername/petrescue.git
-cd petrescue
-```
-
-### 2️⃣ Install dependencies
+### 1️⃣ Build & Migrate
 ```bash
 npm install
-```
-
-### 3️⃣ Setup database
-```bash
 npx prisma generate
-npx prisma db push
+npx prisma migrate dev
 ```
 
-### 4️⃣ Import initial data
-```bash
-npx tsx scripts/import-csv.ts
-```
-*Or use the admin dashboard at:* `/admin/import`
+### 2️⃣ Production Environment Variables
+Set these in Vercel or your `.env`:
+- `DATABASE_URL`: Your PostgreSQL connection string.
+- `ADMIN_SECRET`: A secure key for triggering data imports.
 
-### 5️⃣ Run development server
+### 3️⃣ Ingest Free Data (OSM)
+Once deployed, trigger the OSM ingestion pipeline:
 ```bash
-npm run dev
+# Example using fetch in console
+fetch("/api/admin/import-osm", {
+  method: "POST",
+  headers: { "x-admin-secret": "YOUR_ADMIN_SECRET" }
+})
 ```
-App runs at: [http://localhost:3000](http://localhost:3000)
 
 ## 🧠 How Emergency Mode Works
-The emergency endpoint prioritizes locations in the following order:
-1. **Open 24 Hours**
-2. **Currently Open**
-3. **Unknown Status**
-4. **Closed**
+The system detects the `locationMode` from localStorage:
+- **GPS Mode**: Filters clinics within a 20km radius, sorted by distance.
+- **District Mode**: Filters clinics in the selected Sri Lanka district, prioritizing those with "24 hours" in their status.
 
-Within each group, they are sorted by:
-- **Distance** (Calculated via Haversine formula)
-- **Rating** (Higher ratings first)
-
-## ⚠️ Limitations (Current Version)
-- Some listings may lack latitude/longitude
-- Open/Closed status is based on scraped text
-- Data freshness depends on CSV updates
-- No authentication system yet
+## ⚠️ Limitations
+- OSM data depends on community contributions in Sri Lanka.
+- Opening hours parsing is based on OSM tags (amenity=veterinary, shop=pet).
 
 ## 📊 Data Collection Note
 This project currently uses CSV data exported from Google Maps search results for development purposes. Future production deployment would require the official Google Places API and scheduled data refresh jobs.

@@ -5,52 +5,61 @@ import { getDistance } from "@/lib/geo";
 
 export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
-    const lat = parseFloat(searchParams.get("lat") || "");
-    const lng = parseFloat(searchParams.get("lng") || "");
-    const radius_km = parseFloat(searchParams.get("radius_km") || "15");
-
-    if (isNaN(lat) || isNaN(lng)) {
-        return NextResponse.json({ error: "Latitude and Longitude are required for GPS-based emergency search" }, { status: 400 });
-    }
+    const latRaw = searchParams.get("lat");
+    const lngRaw = searchParams.get("lng");
+    const district = searchParams.get("district");
+    const radius_km = parseFloat(searchParams.get("radius_km") || "20");
 
     try {
-        let places = await db.place.findMany({
-            where: {
-                category: "clinic",
-                latitude: { not: null },
-                longitude: { not: null }
+        if (latRaw && lngRaw) {
+            const lat = parseFloat(latRaw);
+            const lng = parseFloat(lngRaw);
+
+            if (isNaN(lat) || isNaN(lng)) {
+                return NextResponse.json({ error: "Invalid coordinates" }, { status: 400 });
             }
-        });
 
-        // Calculate distance and filter by radius
-        places = places.map((place: any) => ({
-            ...place,
-            distance: getDistance(lat, lng, place.latitude!, place.longitude!)
-        })).filter((place: any) => place.distance <= radius_km);
+            const places = await db.place.findMany({
+                where: {
+                    category: "clinic",
+                    latitude: { not: null },
+                    longitude: { not: null }
+                }
+            });
 
-        // Sorting priority:
-        // 1) openingStatus: "Open 24 hours" > "Open" > unknown > "Closed"
-        // 2) distance asc
-        // 3) rating desc
+            const sorted = places
+                .map((place: any) => ({
+                    ...place,
+                    distance: getDistance(lat, lng, place.latitude!, place.longitude!)
+                }))
+                .filter((place: any) => place.distance <= radius_km)
+                .sort((a, b) => a.distance - b.distance);
 
-        const sorted = places.sort((a: any, b: any) => {
-            const getPriority = (p: any) => {
-                const status = (p.openingStatus || "").toLowerCase();
-                if (status.includes("24 hours")) return 0;
-                if (status.includes("open")) return 1;
-                if (status.includes("closed")) return 3;
-                return 2;
-            };
+            return NextResponse.json(sorted);
+        } else if (district) {
+            const places = await db.place.findMany({
+                where: {
+                    category: "clinic",
+                    OR: [
+                        { district: { equals: district, mode: 'insensitive' } },
+                        { district: { equals: `${district} District`, mode: 'insensitive' } }
+                    ]
+                }
+            });
 
-            const priA = getPriority(a);
-            const priB = getPriority(b);
+            const sorted = places.sort((a, b) => {
+                const is24h = (p: any) => (p.openingStatus || "").toLowerCase().includes("24 hours");
+                const priA = is24h(a) ? 0 : 1;
+                const priB = is24h(b) ? 0 : 1;
 
-            if (priA !== priB) return priA - priB;
-            if (a.distance !== b.distance) return a.distance - b.distance;
-            return (b.rating || 0) - (a.rating || 0);
-        });
+                if (priA !== priB) return priA - priB;
+                return a.name.localeCompare(b.name);
+            });
 
-        return NextResponse.json(sorted);
+            return NextResponse.json(sorted);
+        } else {
+            return NextResponse.json({ error: "Either lat/lng or district is required" }, { status: 400 });
+        }
     } catch (error: any) {
         return NextResponse.json({ error: error.message }, { status: 500 });
     }

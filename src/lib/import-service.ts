@@ -3,17 +3,17 @@ import fs from "fs";
 import csv from "csv-parser";
 
 interface CsvRow {
-    "hfpxzc href"?: string;
-    qBF1Pd?: string;
-    MW4etd?: string;
-    UY7F9?: string;
-    W4Efsd?: string;
-    "W4Efsd 4"?: string;
-    "W4Efsd 5"?: string;
-    "W4Efsd 6"?: string;
-    UsdlK?: string;
-    "Jn12ke src"?: string;
-    ah5Ghc?: string;
+    mapsUrl?: string;
+    name?: string;
+    rating?: string;
+    reviewCount?: string;
+    category?: string;
+    address?: string;
+    openingStatus?: string;
+    closingInfo?: string;
+    phone?: string;
+    imageUrl?: string;
+    keyReviewSnippet?: string;
 }
 
 const SRI_LANKA_DISTRICTS = [
@@ -74,8 +74,8 @@ export async function processRows(rows: CsvRow[], forcedDistrict?: string) {
 
     for (const row of rows) {
         rowNumber++;
-        const name = row.qBF1Pd?.trim() || "";
-        const address = row["W4Efsd 4"]?.trim() || "";
+        const name = row.name?.trim() || "";
+        const address = row.address?.trim() || "";
 
         if (!name) {
             console.warn(`[Import] Skipping row ${rowNumber}: Missing name.`);
@@ -83,7 +83,7 @@ export async function processRows(rows: CsvRow[], forcedDistrict?: string) {
             continue;
         }
 
-        const categoryRaw = row.W4Efsd || "";
+        const categoryRaw = row.category || "";
         let category = "clinic";
         if (categoryRaw.includes("Veterinarian") || categoryRaw.includes("Animal hospital")) {
             category = "clinic";
@@ -91,13 +91,13 @@ export async function processRows(rows: CsvRow[], forcedDistrict?: string) {
             category = "pet_shop";
         }
 
-        const rating = parseFloat(row.MW4etd || "0") || 0;
-        const reviewCount = parseInt((row.UY7F9 || "").replace(/\D/g, ""), 10) || 0;
+        const rating = parseFloat(row.rating || "0") || 0;
+        const reviewCount = parseInt((row.reviewCount || "").replace(/\D/g, ""), 10) || 0;
 
         let latitude: number | null = null;
         let longitude: number | null = null;
 
-        const mapsUrl = row["hfpxzc href"];
+        const mapsUrl = row.mapsUrl;
         if (mapsUrl) {
             const match = mapsUrl.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
             if (match) {
@@ -117,11 +117,11 @@ export async function processRows(rows: CsvRow[], forcedDistrict?: string) {
             mapsUrl,
             latitude,
             longitude,
-            phone: row.UsdlK,
-            imageUrl: row["Jn12ke src"],
-            openingStatus: row["W4Efsd 5"],
-            closingInfo: row["W4Efsd 6"],
-            reviewSnippet: row.ah5Ghc,
+            phone: row.phone,
+            imageUrl: row.imageUrl,
+            openingStatus: row.openingStatus,
+            closingInfo: row.closingInfo,
+            reviewSnippet: row.keyReviewSnippet,
             district,
             lastUpdatedAt: new Date(),
             source: "csv_import",

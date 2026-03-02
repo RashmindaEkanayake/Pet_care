@@ -27,8 +27,8 @@ export async function POST(req: NextRequest) {
         let not_found_count = 0;
 
         for (const row of results) {
-            const name = row.qBF1Pd?.trim() || "";
-            const address = row["W4Efsd 4"]?.trim() || "";
+            const name = row.name?.trim() || "";
+            const address = row.address?.trim() || "";
 
             if (!name) continue;
 

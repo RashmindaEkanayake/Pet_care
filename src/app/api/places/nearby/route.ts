@@ -12,38 +12,33 @@ export async function GET(req: NextRequest) {
     const q = searchParams.get("q");
 
     if (isNaN(lat) || isNaN(lng)) {
-        return NextResponse.json({ error: "Latitude and Longitude are required for GPS-based search" }, { status: 400 });
+        return NextResponse.json({ error: "Latitude and Longitude are required" }, { status: 400 });
     }
 
     try {
-        const where: any = {
-            latitude: { not: null },
-            longitude: { not: null }
-        };
+        const places = await db.place.findMany({
+            where: {
+                latitude: { not: null },
+                longitude: { not: null },
+                ...(category && category !== "all" ? { category } : {}),
+                ...(q ? {
+                    OR: [
+                        { name: { contains: q } },
+                        { address: { contains: q } }
+                    ]
+                } : {})
+            }
+        });
 
-        if (category && category !== "all") {
-            where.category = category;
-        }
+        const sorted = places
+            .map((place: any) => ({
+                ...place,
+                distance: getDistance(lat, lng, place.latitude!, place.longitude!)
+            }))
+            .filter((place: any) => place.distance <= radius_km)
+            .sort((a: any, b: any) => a.distance - b.distance);
 
-        if (q) {
-            where.OR = [
-                { name: { contains: q } },
-                { address: { contains: q } }
-            ];
-        }
-
-        let places = await db.place.findMany({ where });
-
-        // Calculate distance and filter by radius
-        places = places.map((place: any) => ({
-            ...place,
-            distance: getDistance(lat, lng, place.latitude!, place.longitude!)
-        })).filter((place: any) => place.distance <= radius_km);
-
-        // Sort by distance asc
-        places.sort((a: any, b: any) => a.distance - b.distance);
-
-        return NextResponse.json(places);
+        return NextResponse.json(sorted);
     } catch (error: any) {
         return NextResponse.json({ error: error.message }, { status: 500 });
     }
